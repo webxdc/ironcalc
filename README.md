@@ -4,7 +4,7 @@
 Bundle the [ironcal](https://github.com/ironcalc/ironcalc) frontend as webxdc application.
 
 ## Syncing
-This webxdc currently does not support any syncing between devices.
+You can sync your sheets with other group members. 
 
 
 ## Building

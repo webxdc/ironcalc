@@ -66,7 +66,14 @@ export function loadModelFromStorageOrCreate(): Model {
     // We try to load the selected model
     const modelBytesString = localStorage.getItem(uuid);
     if (modelBytesString) {
-      return Model.from_bytes(base64ToBytes(modelBytesString));
+      try {
+        return Model.from_bytes(base64ToBytes(modelBytesString));
+      } catch (e) {
+        console.warn("Failed to load model from storage, creating new one:", e);
+        // Clear corrupted data and create a new model
+        localStorage.removeItem(uuid);
+        localStorage.removeItem("selected");
+      }
     }
     // If it doesn't exist we create one at that uuid
     const newModel = new Model("Workbook1", "en", "UTC");

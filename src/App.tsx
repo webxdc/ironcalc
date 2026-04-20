@@ -21,6 +21,9 @@ declare global {
 function App() {
   const [model, setModel] = useState<Model | null>(null);
   const uuid = get_or_create_uuid();
+
+  const [refreshId, forceUpdate] = useState(0);
+
   useEffect(() => {
     async function start() {
       await init();
@@ -36,6 +39,7 @@ function App() {
     if (!model) {
       return
     }
+
     const int = setInterval(() => {
 
       let diff = model.flushSendQueue();
@@ -43,7 +47,9 @@ function App() {
         return
       }
       saveSelectedModelInStorage(model);
-      const diffBase64 = base64Encode(diff);
+      const diffBuffer = new ArrayBuffer(diff.byteLength);
+      new Uint8Array(diffBuffer).set(diff);
+      const diffBase64 = base64Encode(diffBuffer);
       window.webxdc.sendUpdate({ payload: { data: diffBase64, sender: uuid } }, "");
     }, 1000)
 
@@ -54,7 +60,8 @@ function App() {
         console.warn("Received external diffs but model is not initialized yet");
         return
       }
-      if (payload.sender === uuid) {
+
+      if (!payload || !payload.data || payload.sender === uuid) {
         return
       }
       // Decode base64 back to binary and convert to Uint8Array
@@ -64,11 +71,13 @@ function App() {
       saveSelectedModelInStorage(model);
       const newModel = Model.from_bytes(model.toBytes());
       setModel(newModel);
+      forceUpdate(v => v + 1);
     }, max_serial)
+
     return () => {
       clearInterval(int)
     }
-  })
+  }, [model, uuid, max_serial])
 
 
   if (!model) {
@@ -86,7 +95,7 @@ function App() {
 
   return (
     <Wrapper>
-      <IronCalc model={model} />
+      <IronCalc model={model} refreshId={refreshId} />
     </Wrapper>
   );
 }
@@ -131,4 +140,3 @@ function get_or_create_uuid(): string {
   localStorage.setItem("uuid", newUuid);
   return newUuid
 }
-

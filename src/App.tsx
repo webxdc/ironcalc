@@ -2,12 +2,14 @@ import "./App.css";
 import styled from "@emotion/styled";
 import { useEffect, useState } from "react";
 import {
-  loadModelFromStorageOrCreate,
+  createNewModel,
+  loadSelectedModelFromStorage,
   saveSelectedModelInStorage,
 } from "./components/storage";
 
 // From IronCalc
 import { IronCalc, IronCalcIcon, Model, init } from "@ironcalc/workbook";
+import "@ironcalc/workbook/style.css";
 
 import { Webxdc } from "@webxdc/types";
 import { encode as base64Encode, decode as base64Decode } from "base64-arraybuffer";
@@ -24,7 +26,7 @@ function App() {
   useEffect(() => {
     async function start() {
       await init();
-      const newModel = loadModelFromStorageOrCreate();
+      const newModel = loadSelectedModelFromStorage() ?? createNewModel();
       setModel(newModel);
     }
     start();
@@ -43,7 +45,7 @@ function App() {
         return
       }
       saveSelectedModelInStorage(model);
-      const diffBase64 = base64Encode(diff);
+      const diffBase64 = base64Encode(diff.buffer as ArrayBuffer);
       window.webxdc.sendUpdate({ payload: { data: diffBase64, sender: uuid } }, "");
     }, 1000)
 
@@ -62,7 +64,7 @@ function App() {
       const diff = new Uint8Array(diffBuffer);
       model.applyExternalDiffs(diff);
       saveSelectedModelInStorage(model);
-      const newModel = Model.from_bytes(model.toBytes());
+      const newModel = Model.from_bytes(model.toBytes(), model.getLanguage());
       setModel(newModel);
     }, max_serial)
     return () => {

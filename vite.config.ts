@@ -1,11 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
-import { buildXDC } from "@webxdc/vite-plugins";
+import { buildXDC, mockWebxdc } from "@webxdc/vite-plugins";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), svgr(), buildXDC()],
+  plugins: [react(), svgr(), buildXDC(), mockWebxdc()],
   resolve: {
     // We depend on IronCalc via a `link:` symlink so checkout rebuilds are
     // picked up live. The symlink drags in the checkout's own node_modules,

@@ -16,3 +16,23 @@ pnpm build
 ```
 
 The webxdc will then be in the `dist-xdc` folder.
+
+## Developing with webxdc-dev
+
+[webxdc-dev](https://github.com/webxdc/webxdc-dev) simulates multiple peers so you
+can test syncing locally. Two workflows are available:
+
+Run against the vite dev server (hot-reload, best for iterating):
+
+```bash
+pnpm dev:webxdc
+```
+
+Run against the actual built `.xdc` artifact (faithful to what ships):
+
+```bash
+pnpm webxdc:xdc
+```
+
+Both open the webxdc-dev frontend on `http://localhost:7000`. There is also
+`pnpm webxdc:dist`, which runs against the unpacked `dist` directory.

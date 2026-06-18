@@ -46,7 +46,11 @@ function App() {
       }
       saveSelectedModelInStorage(model);
       const diffBase64 = base64Encode(diff.buffer as ArrayBuffer);
-      window.webxdc.sendUpdate({ payload: { data: diffBase64, sender: uuid } }, "");
+      const payload = { data: diffBase64, sender: uuid };
+      if (import.meta.env.DEV) {
+        console.log("[calc:diff]", payload);
+      }
+      window.webxdc.sendUpdate({ payload }, "");
     }, 1000)
 
     window.webxdc.setUpdateListener((update) => {

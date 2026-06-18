@@ -1,6 +1,6 @@
 import "./App.css";
 import styled from "@emotion/styled";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   createNewModel,
   loadSelectedModelFromStorage,
@@ -17,34 +17,72 @@ import { encode as base64Encode, decode as base64Decode } from "base64-arraybuff
 declare global {
   interface Window {
     webxdc: Webxdc<{ data: string, sender: string }>;
+    // We expose the current model so Playwright tests can access the IronCalc model.
+    // This is only set in dev mode.
+    __model?: Model;
   }
 }
 
 function App() {
   const [model, setModel] = useState<Model | null>(null);
-  const uuid = get_or_create_uuid();
+
+  // We keep a reference to the model. This way we can register callbacks that
+  // accesss this without having to re-register them when the model is replaced.
+  const modelRef = useRef<Model | null>(null);
+
+  // We keep the model in sync with the model ref. We also make sure it's
+  // exposed on the window for tests in dev mode.
   useEffect(() => {
+    modelRef.current = model;
+    if (import.meta.env.DEV && model) {
+      window.__model = model;
+    }
+  }, [model]);
+
+
+  // a unique identifier for this client.
+  const uuid = get_or_create_uuid();
+
+  useEffect(() => {
+    // because React StrictMode runs useEffect twice in dev, we want to make
+    // sure we don't actually 
+    let cancelled = false;
     async function start() {
+      // initialize ironcalc. This is idempotent so can be called multiple times in StrictMode.
       await init();
+      // the first time around in StrictMode, we have been cancelled so
+      // we don't attempt to set the model.
+      if (cancelled) {
+        return;
+      }
+      // the second time in StrictMode (or the first time outside of StrictMode) is the real one
+      // so we load the model from storage or create a new one and set it in state.
       const newModel = loadSelectedModelFromStorage() ?? createNewModel();
       setModel(newModel);
     }
+    // we start the async here, not waiting for its completion
     start();
+    return () => {
+      // if this gets torn down (which happens in StrictMode), we don't try to set the model twice.
+      cancelled = true;
+    };
   }, []);
 
-  let max_serial = get_last_serial()
 
+  // Outgoing: flush local edits to peers on an interval.
   useEffect(() => {
-    if (!model) {
-      return
-    }
     const int = setInterval(() => {
-
+      const model = modelRef.current;
+      if (!model) {
+        return
+      }
       let diff = model.flushSendQueue();
+      // length 1 encoded is the empty vec, which is a no-op.
       if (diff.length <= 1) {
         return
       }
       saveSelectedModelInStorage(model);
+      // send the webxdc update message
       const diffBase64 = base64Encode(diff.buffer as ArrayBuffer);
       const payload = { data: diffBase64, sender: uuid };
       if (import.meta.env.DEV) {
@@ -52,8 +90,23 @@ function App() {
       }
       window.webxdc.sendUpdate({ payload }, "");
     }, 1000)
+    return () => {
+      clearInterval(int)
+    }
+  }, [uuid])
 
+  // React by default uses StrictMode in dev to flush out bugs. This invokes
+  // useEffect twice. But webxdc expects a single update listener registration. 
+  // This ref is to make sure it's registered only once.
+  const listenerRegistered = useRef(false);
+
+  useEffect(() => {
+    if (listenerRegistered.current) {
+      return
+    }
+    listenerRegistered.current = true
     window.webxdc.setUpdateListener((update) => {
+      const model = modelRef.current;
       const payload = update.payload;
       localStorage.setItem("last_serial", update.serial.toString());
       if (!model) {
@@ -70,11 +123,8 @@ function App() {
       saveSelectedModelInStorage(model);
       const newModel = Model.from_bytes(model.toBytes(), model.getLanguage());
       setModel(newModel);
-    }, max_serial)
-    return () => {
-      clearInterval(int)
-    }
-  })
+    }, get_last_serial())
+  }, [uuid])
 
 
   if (!model) {

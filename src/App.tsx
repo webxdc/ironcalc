@@ -26,6 +26,11 @@ declare global {
 function App() {
   const [model, setModel] = useState<Model | null>(null);
 
+  // Bumped whenever we apply a remote diff to the model. We pass this to
+  // IronCalc so it repaints the canvas without resetting the workbook
+  // interaction state (the in-progress cell edit, selection, focus).
+  const [externalRevision, setExternalRevision] = useState(0);
+
   // We keep a reference to the model. This way we can register callbacks that
   // accesss this without having to re-register them when the model is replaced.
   const modelRef = useRef<Model | null>(null);
@@ -122,8 +127,9 @@ function App() {
       const diff = new Uint8Array(diffBuffer);
       model.applyExternalDiffs(diff);
       saveSelectedModelInStorage(model);
-      const newModel = Model.from_bytes(model.toBytes(), model.getLanguage());
-      setModel(newModel);
+      // The model is mutated in place; bump the revision so IronCalc repaints
+      // the canvas without disturbing an in-progress edit.
+      setExternalRevision((revision) => revision + 1);
     }, get_last_serial())
   }, [uuid])
 
@@ -143,7 +149,7 @@ function App() {
 
   return (
     <Wrapper>
-      <IronCalc model={model} />
+      <IronCalc model={model} externalRevision={externalRevision} />
     </Wrapper>
   );
 }

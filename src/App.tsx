@@ -100,6 +100,7 @@ function App() {
   // This ref is to make sure it's registered only once.
   const listenerRegistered = useRef(false);
 
+  // Incoming: apply remote diffs to the model.
   useEffect(() => {
     if (listenerRegistered.current) {
       return

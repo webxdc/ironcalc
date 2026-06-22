@@ -6,17 +6,19 @@ import { buildXDC, mockWebxdc } from "@webxdc/vite-plugins";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), svgr(), buildXDC(), mockWebxdc()],
-  resolve: {
-    // We depend on IronCalc via a `link:` symlink so checkout rebuilds are
-    // picked up live. The symlink drags in the checkout's own node_modules,
-    // which would otherwise load a second copy of React and crash hooks.
-    // Deduping pins us to a single React/React DOM regardless of resolution.
-    dedupe: ["react", "react-dom"],
+  optimizeDeps: {
+    // `@ironcalc/workbook` is a linked package we actively rebuild. We
+    // do not want vite to put it in a stale cache during its optimization.
+    //
+    // Once we can rely on a released version of IronCalc again, this can
+    // be removed.
+    exclude: ["@ironcalc/workbook"],
   },
-  server: {
-    fs: {
-      // Allow serving files from one level up to the project root
-      allow: ["../../../"],
-    },
+  resolve: {
+    // We end up with multiple copies of these dependencies due to the
+    // vendored `@ironcalc/workbook`, and React doesn't like that, so we dedupe them.
+    //
+    // Once we can rely on a released version of IronCalc again, this can be removed.
+    dedupe: ["react", "react-dom"],
   },
 });

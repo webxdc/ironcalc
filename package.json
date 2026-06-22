@@ -14,7 +14,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@ironcalc/workbook": "link:../IronCalc-checkout/webapp/IronCalc",
+    "@ironcalc/workbook": "link:vendor/ironcalc/webapp/IronCalc",
     "@webxdc/types": "^2.1.2",
     "@webxdc/vite-plugins": "^1.5.1",
     "base64-arraybuffer": "^1.0.2",

@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@ironcalc/wasm': link:../IronCalc-checkout/bindings/wasm/pkg
+  '@ironcalc/wasm': link:vendor/ironcalc/bindings/wasm/pkg
 
 importers:
 
@@ -18,8 +18,8 @@ importers:
         specifier: ^11.14.0
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.7))(@types/react@19.2.17)(react@19.2.7)
       '@ironcalc/workbook':
-        specifier: link:../IronCalc-checkout/webapp/IronCalc
-        version: link:../IronCalc-checkout/webapp/IronCalc
+        specifier: link:vendor/ironcalc/webapp/IronCalc
+        version: link:vendor/ironcalc/webapp/IronCalc
       '@webxdc/types':
         specifier: ^2.1.2
         version: 2.1.2
@@ -910,8 +910,8 @@ packages:
     peerDependencies:
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0
 
-  '@vitejs/plugin-legacy@8.0.2':
-    resolution: {integrity: sha512-+n6znc/hTsuD2v/qWX3nfR6UFWFKwpL+XS+SPyiPuEwAvR24iRvLkJQDh18u0XrHPEwuwxPmw0VopvlmLSg66Q==}
+  '@vitejs/plugin-legacy@8.1.0':
+    resolution: {integrity: sha512-J/w008f2+qJt+QugNCmMjwBfxLEiGkG2Kn5i0z5DDj72oJjzOswUgX2C+32M2nP0Aq+bWDT1a57Bli0r2qPOQA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       terser: ^5.16.0
@@ -3070,7 +3070,7 @@ snapshots:
     dependencies:
       vite: 8.0.16(@types/node@25.9.3)(terser@5.48.0)
 
-  '@vitejs/plugin-legacy@8.0.2(terser@5.48.0)(vite@8.0.16(@types/node@25.9.3)(terser@5.48.0))':
+  '@vitejs/plugin-legacy@8.1.0(terser@5.48.0)(vite@8.0.16(@types/node@25.9.3)(terser@5.48.0))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/plugin-transform-dynamic-import': 7.29.7(@babel/core@7.29.7)
@@ -3101,7 +3101,7 @@ snapshots:
   '@webxdc/vite-plugins@1.6.0(terser@5.48.0)(vite@8.0.16(@types/node@25.9.3)(terser@5.48.0))':
     dependencies:
       '@vitejs/plugin-basic-ssl': 2.3.0(vite@8.0.16(@types/node@25.9.3)(terser@5.48.0))
-      '@vitejs/plugin-legacy': 8.0.2(terser@5.48.0)(vite@8.0.16(@types/node@25.9.3)(terser@5.48.0))
+      '@vitejs/plugin-legacy': 8.1.0(terser@5.48.0)(vite@8.0.16(@types/node@25.9.3)(terser@5.48.0))
       eruda: 3.4.3
       vite-plugin-zip-pack: 1.2.4(vite@8.0.16(@types/node@25.9.3)(terser@5.48.0))
     transitivePeerDependencies:

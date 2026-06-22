@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+
+members = [
+  "base",
+  "xlsx",
+  "bindings/wasm",
+  "bindings/python",
+  "bindings/nodejs",
+]
+
+exclude = [
+  "generate_language",
+  "generate_locale",
+  "webapp/app.ironcalc.com/server",
+]
+
+[profile.release]
+lto = true

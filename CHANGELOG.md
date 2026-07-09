@@ -28,6 +28,9 @@ The format is based on
   we can get a new IronCalc release with our fix in. It's based on this PR:
   https://github.com/ironcalc/IronCalc/pull/1146.
 
+- Sync our UI code with the later version from IronCalc (which we copy and tweak).
+  Remove some dead code files copied over from IronCalc but which we were not using.
+
 ## [1.0.0] - 2025-06-24
 
 Initial public release.

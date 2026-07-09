@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "dev:webxdc": "concurrently \"vite\" \"webxdc-dev run http://localhost:5173\"",
-    "webxdc:xdc": "pnpm build && webxdc-dev run dist-xdc/app.xdc",
+    "webxdc:xdc": "pnpm build && webxdc-dev run dist-xdc/calc.xdc",
     "webxdc:dist": "pnpm build && webxdc-dev run dist"
   },
   "dependencies": {

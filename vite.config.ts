@@ -5,7 +5,12 @@ import { buildXDC, mockWebxdc } from "@webxdc/vite-plugins";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), svgr(), buildXDC(), mockWebxdc()],
+  plugins: [
+    react(),
+    svgr(),
+    buildXDC({ outFileName: "calc.xdc" }),
+    mockWebxdc(),
+  ],
   optimizeDeps: {
     // `@ironcalc/workbook` is a linked package we actively rebuild. We
     // do not want vite to put it in a stale cache during its optimization.

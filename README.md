@@ -46,7 +46,7 @@ pnpm install
 pnpm build
 ```
 
-The webxdc will then be in the `dist-xdc` folder, as `app.xdc`.
+The webxdc will then be in the `dist-xdc` folder, as `calc.xdc`.
 
 Later builds only need this last step, unless you change the vendored IronCalc.
 

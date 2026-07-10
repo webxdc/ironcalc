@@ -1,0 +1,30 @@
+{
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "correctness": { "noUnusedImports": "error" },
+      "style": { "useBlockStatements": "error" }
+    }
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "css": {
+    "formatter": {
+      "enabled": true
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/locale/*.json"],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "on"
+          }
+        }
+      }
+    }
+  ]
+}

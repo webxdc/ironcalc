@@ -1,0 +1,306 @@
+use std::collections::HashMap;
+
+use bitcode::{Decode, Encode};
+
+use crate::{
+    cf_types::CfRule,
+    types::{Cell, Col, Color, Row, SheetState, Style, Theme, Worksheet},
+};
+
+#[derive(Clone, Encode, Decode)]
+pub(crate) struct RowData {
+    pub(crate) row: Option<Row>,
+    pub(crate) data: HashMap<i32, Cell>,
+}
+
+#[derive(Clone, Encode, Decode)]
+pub(crate) struct ColumnData {
+    pub(crate) column: Option<Col>,
+    pub(crate) data: HashMap<i32, Cell>,
+}
+
+#[derive(Clone, Encode, Decode)]
+pub(crate) enum Diff {
+    // Cell diffs
+    SetCellValue {
+        sheet: u32,
+        row: i32,
+        column: i32,
+        new_value: String,
+        old_value: Box<Option<Cell>>,
+    },
+    SetArrayValue {
+        sheet: u32,
+        row: i32,
+        column: i32,
+        width: i32,
+        height: i32,
+        new_value: String,
+        old_values: Vec<Vec<Option<Cell>>>,
+    },
+    RangeClearContents {
+        sheet: u32,
+        row: i32,
+        column: i32,
+        width: i32,
+        height: i32,
+        old_value: Vec<Vec<Option<Cell>>>,
+    },
+    RangeClearAll {
+        sheet: u32,
+        row: i32,
+        column: i32,
+        width: i32,
+        height: i32,
+        old_value: Vec<Vec<Option<Cell>>>,
+        old_style: Vec<Vec<Style>>,
+    },
+    CellClearFormatting {
+        sheet: u32,
+        row: i32,
+        column: i32,
+        old_style: Box<Option<Style>>,
+    },
+    SetCellStyle {
+        sheet: u32,
+        row: i32,
+        column: i32,
+        old_value: Box<Option<Style>>,
+        new_value: Box<Style>,
+    },
+    // Column and Row diffs
+    SetColumnWidth {
+        sheet: u32,
+        column: i32,
+        new_value: f64,
+        old_value: f64,
+    },
+    SetColumnHidden {
+        sheet: u32,
+        column: i32,
+        new_value: bool,
+        old_value: bool,
+    },
+    SetRowHeight {
+        sheet: u32,
+        row: i32,
+        new_value: f64,
+        old_value: f64,
+    },
+    SetRowHidden {
+        sheet: u32,
+        row: i32,
+        new_value: bool,
+        old_value: bool,
+    },
+    SetColumnStyle {
+        sheet: u32,
+        column: i32,
+        old_value: Box<Option<Style>>,
+        new_value: Box<Style>,
+    },
+    SetRowStyle {
+        sheet: u32,
+        row: i32,
+        old_value: Box<Option<Style>>,
+        new_value: Box<Style>,
+    },
+    DeleteColumnStyle {
+        sheet: u32,
+        column: i32,
+        old_value: Box<Option<Style>>,
+    },
+    DeleteRowStyle {
+        sheet: u32,
+        row: i32,
+        old_value: Box<Option<Style>>,
+    },
+    InsertRows {
+        sheet: u32,
+        row: i32,
+        count: i32,
+    },
+    DeleteRows {
+        sheet: u32,
+        row: i32,
+        count: i32,
+        old_data: Vec<RowData>,
+    },
+    InsertColumns {
+        sheet: u32,
+        column: i32,
+        count: i32,
+    },
+    DeleteColumns {
+        sheet: u32,
+        column: i32,
+        count: i32,
+        old_data: Vec<ColumnData>,
+    },
+    DeleteSheet {
+        sheet: u32,
+        old_data: Box<Worksheet>,
+    },
+    SetFrozenRowsCount {
+        sheet: u32,
+        new_value: i32,
+        old_value: i32,
+    },
+    SetFrozenColumnsCount {
+        sheet: u32,
+        new_value: i32,
+        old_value: i32,
+    },
+    NewSheet {
+        index: u32,
+        name: String,
+    },
+    RenameSheet {
+        index: u32,
+        old_value: String,
+        new_value: String,
+    },
+    SetSheetColor {
+        index: u32,
+        old_value: Color,
+        new_value: Color,
+    },
+    SetSheetState {
+        index: u32,
+        old_value: SheetState,
+        new_value: SheetState,
+    },
+    SetShowGridLines {
+        sheet: u32,
+        old_value: bool,
+        new_value: bool,
+    },
+    SetTheme {
+        old_value: Box<Theme>,
+        new_value: Box<Theme>,
+    },
+    CreateDefinedName {
+        name: String,
+        scope: Option<u32>,
+        value: String,
+    },
+    DeleteDefinedName {
+        name: String,
+        scope: Option<u32>,
+        old_value: String,
+    },
+    UpdateDefinedName {
+        name: String,
+        scope: Option<u32>,
+        old_formula: String,
+        new_name: String,
+        new_scope: Option<u32>,
+        new_formula: String,
+    },
+    MoveColumns {
+        sheet: u32,
+        column: i32,
+        column_count: i32,
+        delta: i32,
+    },
+    MoveRows {
+        sheet: u32,
+        row: i32,
+        row_count: i32,
+        delta: i32,
+    },
+    SetLocale {
+        old_value: String,
+        new_value: String,
+    },
+    SetTimezone {
+        old_value: String,
+        new_value: String,
+    },
+    // Named style diffs
+    CreateNamedStyle {
+        name: String,
+        xf_id: i32,
+    },
+    DeleteNamedStyle {
+        name: String,
+        old_xf_id: i32,
+    },
+    UpdateNamedStyle {
+        name: String,
+        new_name: String,
+        old_xf_id: i32,
+        new_xf_id: i32,
+    },
+    // Conditional formatting diffs
+    AddConditionalFormatting {
+        sheet: u32,
+        range: String,
+        rule: Box<CfRule>,
+        priority: u32,
+    },
+    DeleteConditionalFormatting {
+        sheet: u32,
+        index: u32,
+        old_range: String,
+        old_rule: Box<CfRule>,
+        old_priority: u32,
+    },
+    UpdateConditionalFormatting {
+        sheet: u32,
+        index: u32,
+        old_range: String,
+        old_rule: Box<CfRule>,
+        old_priority: u32,
+        new_range: String,
+        new_rule: Box<CfRule>,
+    },
+    // FIXME: we are missing SetViewDiffs
+}
+
+pub(crate) type DiffList = Vec<Diff>;
+
+#[derive(Default)]
+pub(crate) struct History {
+    pub(crate) undo_stack: Vec<DiffList>,
+    pub(crate) redo_stack: Vec<DiffList>,
+}
+
+impl History {
+    pub fn push(&mut self, diff_list: DiffList) {
+        self.undo_stack.push(diff_list);
+        self.redo_stack = vec![];
+    }
+
+    pub fn undo(&mut self) -> Option<Vec<Diff>> {
+        match self.undo_stack.pop() {
+            Some(diff_list) => {
+                self.redo_stack.push(diff_list.clone());
+                Some(diff_list)
+            }
+            None => None,
+        }
+    }
+
+    pub fn redo(&mut self) -> Option<Vec<Diff>> {
+        match self.redo_stack.pop() {
+            Some(diff_list) => {
+                self.undo_stack.push(diff_list.clone());
+                Some(diff_list)
+            }
+            None => None,
+        }
+    }
+}
+
+#[derive(Clone, Encode, Decode)]
+pub enum DiffType {
+    Undo,
+    Redo,
+}
+
+#[derive(Clone, Encode, Decode)]
+pub struct QueueDiffs {
+    pub r#type: DiffType,
+    pub list: DiffList,
+}

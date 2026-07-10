@@ -1,0 +1,5 @@
+target/*
+venv/*
+sphinx-venv/*
+html/*
+tests/__pycache*

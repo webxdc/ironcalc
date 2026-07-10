@@ -1,0 +1,43 @@
+import ArrowMiddleFromLine from "./arrow-middle-from-line.svg?react";
+import BorderBottomIcon from "./border-bottom.svg?react";
+import BorderCenterHIcon from "./border-center-h.svg?react";
+import BorderCenterVIcon from "./border-center-v.svg?react";
+import BorderInnerIcon from "./border-inner.svg?react";
+import BorderLeftIcon from "./border-left.svg?react";
+import BorderNoneIcon from "./border-none.svg?react";
+import BorderOuterIcon from "./border-outer.svg?react";
+import BorderRightIcon from "./border-right.svg?react";
+import BorderTopIcon from "./border-top.svg?react";
+import DeleteColumnIcon from "./delete-column.svg?react";
+import DeleteRowIcon from "./delete-row.svg?react";
+import Fx from "./fx.svg?react";
+import InsertColumnLeftIcon from "./insert-column-left.svg?react";
+import InsertColumnRightIcon from "./insert-column-right.svg?react";
+import InsertRowAboveIcon from "./insert-row-above.svg?react";
+import InsertRowBelow from "./insert-row-below.svg?react";
+import IronCalcIcon from "./ironcalc_icon.svg?react";
+import IronCalcIconWhite from "./ironcalc_icon_white.svg?react";
+import IronCalcLogo from "./orange+black.svg?react";
+
+export {
+  ArrowMiddleFromLine,
+  BorderBottomIcon,
+  BorderCenterHIcon,
+  BorderCenterVIcon,
+  BorderInnerIcon,
+  BorderLeftIcon,
+  BorderNoneIcon,
+  BorderOuterIcon,
+  BorderRightIcon,
+  BorderTopIcon,
+  DeleteColumnIcon,
+  DeleteRowIcon,
+  Fx,
+  InsertColumnLeftIcon,
+  InsertColumnRightIcon,
+  InsertRowAboveIcon,
+  InsertRowBelow,
+  IronCalcIcon,
+  IronCalcIconWhite,
+  IronCalcLogo,
+};

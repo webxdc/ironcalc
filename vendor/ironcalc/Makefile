@@ -1,0 +1,67 @@
+.PHONY: lint
+lint:
+	cargo fmt -- --check
+	cargo clippy --all-targets --all-features -- -W clippy::unwrap_used -W clippy::expect_used -W clippy::panic -D warnings
+	cd webapp/IronCalc/ && npm install && npm run check
+	cd webapp/app.ironcalc.com/frontend/ && npm install && npm run check
+	cd docs/ && npm install && npm run build
+
+.PHONY: format
+format:
+	cargo fmt
+
+.PHONY: test-language-bin
+test-language-bin:
+	cd generate_language && cargo build -q && cargo run -q
+	diff generate_language/language.bin base/src/language/language.bin
+	rm generate_language/language.bin
+	@echo "language.bin is up to date"
+
+.PHONY: test-rust
+test-rust:
+	cargo test
+	make remove-artifacts
+
+.PHONY: test-js
+test-js:
+	# Regrettably we need to build the wasm twice, once for the nodejs tests
+	# and a second one for the vitest.
+	cd bindings/wasm/ && make tests && make
+	cd webapp/IronCalc/ && npm install && npm run test
+
+.PHONY: test-nodejs
+test-nodejs:
+	cd bindings/nodejs/ && pnpm install && pnpm run build && pnpm run test
+
+.PHONY: test-python
+test-python:
+	cd bindings/python && ./run_tests.sh && ./run_examples.sh
+
+.PHONY: tests
+tests: lint test-rust test-js test-python test-nodejs test-language-bin
+
+.PHONY: remove-artifacts
+remove-artifacts:
+	rm -f xlsx/hello-calc.xlsx
+	rm -f xlsx/hello-styles.xlsx
+	rm -f xlsx/widths-and-heights.xlsx
+
+.PHONY: clean
+clean: remove-artifacts
+	cargo clean
+	rm -r -f base/target
+	rm -r -f xlsx/target
+	rm -r -f bindings/python/target
+	rm -r -f bindings/wasm/targets
+	rm -f cargo-test-*
+	rm -f base/cargo-test-*
+	rm -f xlsx/cargo-test-*
+
+.PHONY: coverage
+coverage:
+	CARGO_INCREMENTAL=0 RUSTFLAGS='-C instrument-coverage' LLVM_PROFILE_FILE='cargo-test-%p-%m.profraw' cargo test
+	grcov . --binary-path ./target/debug/deps/ -s . -t html --branch --ignore-not-existing --ignore '../*' --ignore "/*" -o target/coverage/html
+
+.PHONY: docs
+docs:
+	cargo doc --no-deps

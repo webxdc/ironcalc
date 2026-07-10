@@ -1,0 +1,9 @@
+allowBuilds:
+  core-js: false
+
+# @ironcalc/wasm ships its wasm-bindgen snippets/ dir, but its generated
+# package.json `files` list omits it, so a `file:` install (npm-pack semantics)
+# drops snippets and the build can't resolve ./snippets/.../inline0.js.
+# Linking the dir instead keeps every file present.
+overrides:
+  "@ironcalc/wasm": "link:vendor/ironcalc/bindings/wasm/pkg"

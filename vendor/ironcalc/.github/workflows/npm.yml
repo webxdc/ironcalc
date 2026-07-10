@@ -1,0 +1,523 @@
+name: nodejs
+env:
+  DEBUG: napi:*
+  APP_NAME: nodejs
+  MACOSX_DEPLOYMENT_TARGET: '10.13'
+permissions:
+  contents: write
+  id-token: write
+'on':
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to npm"
+        required: true
+        type: boolean
+defaults:
+  run:
+    working-directory: ./bindings/nodejs
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            build: pnpm run build --target x86_64-apple-darwin
+          - host: windows-latest
+            build: pnpm run build --target x86_64-pc-windows-msvc
+            target: x86_64-pc-windows-msvc
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+            build: |
+              set -e &&
+              rustup toolchain install 1.90.0 &&
+              rustup default 1.90.0 &&
+              corepack enable &&
+              corepack prepare pnpm@9.15.4 --activate &&
+              pnpm install --frozen-lockfile &&
+              pnpm run build --target x86_64-unknown-linux-gnu
+          # - host: ubuntu-latest
+          #   target: x86_64-unknown-linux-musl
+          #   docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
+          #   build: |
+          #     set -e &&
+          #     rustup toolchain install 1.90.0 &&
+          #     rustup default 1.90.0 &&
+          #     rustup target add x86_64-unknown-linux-musl
+          #     corepack enable &&
+          #     corepack prepare pnpm@9.15.4 --activate &&
+          #     pnpm install --frozen-lockfile &&
+          #     pnpm run build --target x86_64-unknown-linux-musl
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            build: |
+              set -e &&
+              rustup toolchain install 1.90.0 &&
+              rustup default 1.90.0 &&
+              corepack enable &&
+              corepack prepare pnpm@9.15.4 --activate &&
+              pnpm install --frozen-lockfile &&
+              pnpm run build --target aarch64-apple-darwin
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
+            build: |
+              set -e &&
+              rustup toolchain install 1.90.0 &&
+              rustup default 1.90.0 &&
+              rustup target add aarch64-unknown-linux-gnu &&
+              corepack enable &&
+              corepack prepare pnpm@9.15.4 --activate &&
+              pnpm install --frozen-lockfile &&
+              pnpm run build --target aarch64-unknown-linux-gnu
+          - host: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            setup: |
+              sudo apt-get update
+              sudo apt-get install -y gcc-arm-linux-gnueabihf libc6-dev-armhf-cross
+            build: |
+              set -e
+              rustup toolchain install 1.90.0
+              rustup default 1.90.0
+              export CC_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-gcc
+              export AR_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-ar
+              export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc
+              export PKG_CONFIG_ALLOW_CROSS=1
+              corepack enable
+              corepack prepare pnpm@9.15.4 --activate
+              pnpm install --frozen-lockfile
+              pnpm run build --target armv7-unknown-linux-gnueabihf
+          # - host: ubuntu-latest
+          #   target: armv7-unknown-linux-musleabihf
+          #   build: |
+          #     set -e
+          #     rustup toolchain install 1.90.0
+          #     rustup default 1.90.0
+          #     # Use Zig as the MUSL cross C toolchain
+          #     export CC_armv7_unknown_linux_musleabihf="zig cc -target armv7-linux-musleabihf -mfpu=vfpv3-d16 -mfloat-abi=hard"
+          #     export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER="zig cc -target armv7-linux-musleabihf -mfpu=vfpv3-d16 -mfloat-abi=hard"
+          #     export AR_armv7_unknown_linux_musleabihf="zig ar"
+          #     export PKG_CONFIG_ALLOW_CROSS=1
+          #     pnpm run build --target armv7-unknown-linux-musleabihf
+          - host: ubuntu-latest
+            target: aarch64-linux-android
+            build: |
+              set -e &&
+              rustup toolchain install 1.90.0 &&
+              rustup default 1.90.0 &&
+              pnpm run build --target aarch64-linux-android
+          - host: ubuntu-latest
+            target: armv7-linux-androideabi
+            build: |
+              set -e &&
+              rustup toolchain install 1.90.0 &&
+              rustup default 1.90.0 &&
+              pnpm run build --target armv7-linux-androideabi
+          # - host: ubuntu-latest
+          #   target: aarch64-unknown-linux-musl
+          #   docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
+          #   build: |-
+          #     set -e &&
+          #     rustup toolchain install 1.90.0 &&
+          #     rustup default 1.90.0 &&
+          #     rustup target add aarch64-unknown-linux-musl &&
+          #     corepack enable &&
+          #     corepack prepare pnpm@9.15.4 --activate &&
+          #     pnpm install --frozen-lockfile &&
+          #     pnpm run build --target aarch64-unknown-linux-musl
+          - host: windows-latest
+            target: aarch64-pc-windows-msvc
+            build: pnpm run build --target aarch64-pc-windows-msvc
+          - host: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            setup: |
+              sudo apt-get update
+              sudo apt-get install gcc-riscv64-linux-gnu -y
+            build: pnpm run build --target riscv64gc-unknown-linux-gnu
+    name: stable - ${{ matrix.settings.target }} - node@20
+    runs-on: ${{ matrix.settings.host }}
+    defaults:
+      run:
+        working-directory: ./bindings/nodejs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        if: ${{ !matrix.settings.docker }}
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: bindings/nodejs/pnpm-lock.yaml
+      - name: Enable pnpm (corepack)
+        if: ${{ !matrix.settings.docker }}
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.4 --activate
+      - name: Install
+        uses: dtolnay/rust-toolchain@stable
+        if: ${{ !matrix.settings.docker }}
+        with:
+          toolchain: 1.90.0
+          targets: ${{ matrix.settings.target }}
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            .cargo-cache
+            target/
+          key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
+      - uses: goto-bus-stop/setup-zig@v2
+        if: ${{ matrix.settings.target == 'armv7-unknown-linux-gnueabihf' || matrix.settings.target == 'armv7-unknown-linux-musleabihf' }}
+        with:
+          version: 0.13.0
+      - name: Setup toolchain
+        run: ${{ matrix.settings.setup }}
+        if: ${{ matrix.settings.setup }}
+        shell: bash
+      - name: Install dependencies
+        if: ${{ !matrix.settings.docker }}
+        run: pnpm install --frozen-lockfile
+      - name: Build in docker
+        uses: addnab/docker-run-action@v3
+        if: ${{ matrix.settings.docker }}
+        with:
+          image: ${{ matrix.settings.docker }}
+          options: '--user 0:0 -v ${{ github.workspace }}/.cargo-cache/git/db:/usr/local/cargo/git/db -v ${{ github.workspace }}/.cargo/registry/cache:/usr/local/cargo/registry/cache -v ${{ github.workspace }}/.cargo/registry/index:/usr/local/cargo/registry/index -v ${{ github.workspace }}:/build -w /build/bindings/nodejs'
+          run: ${{ matrix.settings.build }}
+      - name: Build
+        run: ${{ matrix.settings.build }}
+        if: ${{ !matrix.settings.docker }}
+        shell: bash
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-${{ matrix.settings.target }}
+          path: bindings/nodejs/${{ env.APP_NAME }}.*.node
+          if-no-files-found: error
+  test-macOS-windows-binding:
+    name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
+    needs:
+      - build
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-latest
+            target: x86_64-apple-darwin
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+        node:
+          - '20'
+    runs-on: ${{ matrix.settings.host }}
+    defaults:
+      run:
+        working-directory: ./bindings/nodejs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: bindings/nodejs/pnpm-lock.yaml
+          architecture: x64
+      - name: Enable pnpm (corepack)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.4 --activate
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-${{ matrix.settings.target }}
+          path: bindings/nodejs/
+      - name: List packages
+        run: ls -R .
+        shell: bash
+      - name: Test bindings
+        run: pnpm test
+  test-linux-x64-gnu-binding:
+    name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
+    needs:
+      - build
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - '20'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bindings/nodejs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: bindings/nodejs/pnpm-lock.yaml
+      - name: Enable pnpm (corepack)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.4 --activate
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-x86_64-unknown-linux-gnu
+          path: bindings/nodejs/
+      - name: List packages
+        run: ls -R .
+        shell: bash
+      - name: Test bindings
+        run: docker run --rm -v $(pwd):/build -w /build/bindings/nodejs node:${{ matrix.node }}-slim sh -lc "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm test"
+  # test-linux-x64-musl-binding:
+  #   name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
+  #   needs:
+  #     - build
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       node:
+  #         - '20'
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: ./bindings/nodejs
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ matrix.node }}
+  #         cache: npm
+  #         cache-dependency-path: bindings/nodejs/pnpm-lock.yaml
+  #     - name: Enable pnpm (corepack)
+  #       run: |
+  #         corepack enable
+  #         corepack prepare pnpm@9.15.4 --activate
+  #     - name: Install dependencies
+  #       run: |
+  #         pnpm config set supportedArchitectures.libc musl
+  #         pnpm install --frozen-lockfile
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: bindings-x86_64-unknown-linux-musl
+  #         path: bindings/nodejs/
+  #     - name: List packages
+  #       run: ls -R .
+  #       shell: bash
+  #     - name: Test bindings
+  #       run: docker run --rm -v $(pwd):/build -w /build/bindings/nodejs node:${{ matrix.node }}-alpine sh -lc "corepack enable && corepack prepare pnpm@9.15.4 --activate && pnpm test"
+  test-linux-aarch64-gnu-binding:
+    name: Test bindings on aarch64-unknown-linux-gnu - node@${{ matrix.node }}
+    needs:
+      - build
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - '20'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bindings/nodejs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-aarch64-unknown-linux-gnu
+          path: bindings/nodejs/
+      - name: List packages
+        run: ls -R .
+        shell: bash
+      - name: Enable pnpm (corepack)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.4 --activate
+      - name: Install dependencies
+        run: |
+          pnpm config set supportedArchitectures.cpu arm64
+          pnpm config set supportedArchitectures.libc glibc
+          pnpm install --frozen-lockfile
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Setup and run tests
+        uses: addnab/docker-run-action@v3
+        with:
+          image: node:${{ matrix.node }}-slim
+          options: '--platform linux/arm64 -v ${{ github.workspace }}:/build -w /build/bindings/nodejs'
+          run: |
+            set -e
+            corepack enable
+            corepack prepare pnpm@9.15.4 --activate
+            pnpm test
+            ls -la
+  # test-linux-aarch64-musl-binding:
+  #   name: Test bindings on aarch64-unknown-linux-musl - node@${{ matrix.node }}
+  #   needs:
+  #     - build
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: ./bindings/nodejs
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: bindings-aarch64-unknown-linux-musl
+  #         path: bindings/nodejs/
+  #     - name: List packages
+  #       run: ls -R .
+  #       shell: bash
+  #     - name: Install dependencies
+  #       run: |
+  #         pnpm config set supportedArchitectures.cpu arm64
+  #         pnpm config set supportedArchitectures.libc musl
+  #         pnpm install --frozen-lockfile
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v3
+  #       with:
+  #         platforms: arm64
+  #     - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  #     - name: Setup and run tests
+  #       uses: addnab/docker-run-action@v3
+  #       with:
+  #         image: node:lts-alpine
+  #         options: '--platform linux/arm64 -v ${{ github.workspace }}:/build -w /build/bindings/nodejs'
+  #         run: |
+  #           set -e
+  #           corepack enable
+  #           corepack prepare pnpm@9.15.4 --activate
+  #           pnpm test
+  universal-macOS:
+    name: Build universal macOS binary
+    needs:
+      - build
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ./bindings/nodejs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: bindings/nodejs/pnpm-lock.yaml
+      - name: Enable pnpm (corepack)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.4 --activate
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Download macOS x64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-x86_64-apple-darwin
+          path: bindings/nodejs/artifacts
+      - name: Download macOS arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-aarch64-apple-darwin
+          path: bindings/nodejs/artifacts
+      - name: Place binaries where napi universalize expects them
+        run: |
+          set -e
+          ls -la artifacts
+          # Copy the downloaded .node binaries to the package root
+          cp -v artifacts/${{ env.APP_NAME }}.*.node .
+          ls -la .
+      - name: Combine binaries
+        run: pnpm run universal
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-universal-apple-darwin
+          path: bindings/nodejs/${{ env.APP_NAME }}.*.node
+          if-no-files-found: error
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bindings/nodejs
+    needs:
+      - test-macOS-windows-binding
+      - test-linux-x64-gnu-binding
+      # - test-linux-x64-musl-binding
+      - test-linux-aarch64-gnu-binding
+      # - test-linux-aarch64-musl-binding
+      - universal-macOS
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: bindings/nodejs/pnpm-lock.yaml
+
+      - name: Enable pnpm (corepack)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.4 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download all artifacts (flatten)
+        uses: actions/download-artifact@v4
+        with:
+          path: ./bindings/nodejs
+          merge-multiple: true
+
+      - name: Move downloaded binaries into ./artifacts for napi
+        run: |
+          set -e
+          mkdir -p artifacts
+          shopt -s nullglob
+          for f in ./*.node; do
+            mv -v "$f" artifacts/
+          done
+          echo "Artifacts directory:"
+          ls -la artifacts
+
+      - name: Collect artifacts into npm dirs
+        run: pnpm run artifacts
+
+      - name: List packages
+        run: ls -R ./npm
+        shell: bash
+
+      - name: Publish
+        run: |
+          echo "${{ github.event.inputs.publish }}"
+          if [ "${{ github.event.inputs.publish }}" = "true" ]; then
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+            npm publish --access public
+            echo "Published to npm"
+          else
+            echo "Not a release, skipping publish"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

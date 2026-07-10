@@ -24,3 +24,14 @@ dist-xdc
 *.sln
 *.sw?
 .direnv
+
+# IronCalc doesn't ignore these build artifacts
+/vendor/ironcalc/bindings/wasm/pkg/
+/vendor/ironcalc/bindings/wasm/types.js
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
